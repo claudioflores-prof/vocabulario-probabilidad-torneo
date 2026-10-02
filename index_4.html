@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Torneo del Vocabulario de Probabilidad · IV Medio</title>
+<style>
+  :root{
+    --azul:#1B4D7E; --azul-claro:#E8F0F7;
+    --ambar:#B45309; --ambar-claro:#FDF3E7;
+    --verde:#15803D; --verde-claro:#E7F5EC;
+    --rojo:#B91C1C;  --rojo-claro:#FBEAEA;
+    --gris:#D4D9DE;  --texto:#000000;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html{-webkit-text-size-adjust:100%;}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:#fff;color:var(--texto);line-height:1.45;}
+  .app{max-width:760px;margin:0 auto;padding:16px 14px 40px;}
+  .pantalla{display:none;} .pantalla.activa{display:block;}
+  h1{font-size:26px;margin:0 0 6px;color:var(--azul);line-height:1.2;}
+  h2{font-size:19px;margin:18px 0 6px;color:var(--azul);}
+  .sub{font-size:14px;margin:0 0 18px;}
+  label{display:block;font-size:14px;font-weight:600;margin-bottom:5px;}
+  input[type=text],select{width:100%;padding:12px 14px;font-size:16px;font-family:inherit;color:var(--texto);border:2px solid var(--gris);border-radius:8px;margin-bottom:14px;background:#fff;}
+  input[type=text]:focus,select:focus{outline:none;border-color:var(--azul);}
+  .errorCampo{color:var(--rojo);font-size:13px;font-weight:600;margin:-8px 0 12px;display:none;}
+  .errorCampo.visible{display:block;}
+  button{font-family:inherit;}
+  button.principal{width:100%;padding:15px;font-size:17px;font-weight:700;background:var(--ambar);color:#fff;border:none;border-radius:8px;cursor:pointer;}
+  button.principal:active{background:#8F420A;}
+  button.secundario{width:100%;padding:13px;font-size:15px;font-weight:600;background:#fff;color:var(--azul);border:2px solid var(--azul);border-radius:8px;cursor:pointer;margin-top:10px;}
+
+  .barra{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 14px;background:var(--azul);color:#fff;border-radius:10px 10px 0 0;}
+  .barra .ronda{font-size:14px;font-weight:600;}
+  .barra .reloj{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;}
+  .barra .reloj.alerta{color:#FFD9A0;}
+  .marcador{display:flex;justify-content:space-between;gap:8px;padding:7px 14px;margin-bottom:14px;background:var(--azul-claro);border-radius:0 0 10px 10px;font-size:13.5px;font-weight:700;color:var(--azul);}
+  .marcador .combo{color:var(--ambar);}
+  .marcador .combo.fuego{background:var(--ambar);color:#fff;padding:0 8px;border-radius:12px;}
+
+  .estacion{display:block;width:100%;text-align:left;padding:14px 16px;margin-bottom:10px;border:2px solid var(--gris);border-radius:10px;background:#fff;cursor:pointer;color:var(--texto);}
+  .estacion:hover{border-color:var(--azul);}
+  .estacion .nom{font-size:17px;font-weight:700;color:var(--azul);margin-bottom:2px;}
+  .estacion .desc{font-size:13.5px;}
+  .estacion .tag{display:inline-block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:3px 8px;border-radius:20px;margin-bottom:6px;background:var(--azul-claro);color:var(--azul);}
+  .estacion.hecha{border-color:var(--verde);background:var(--verde-claro);cursor:default;}
+  .estacion.hecha .tag{background:var(--verde);color:#fff;}
+  .nota{font-size:13px;padding:10px 12px;background:var(--ambar-claro);border-left:4px solid var(--ambar);border-radius:6px;margin:6px 0 16px;}
+
+  /* E1 */
+  .titulo-ronda{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--ambar);margin-bottom:2px;}
+  .tablero{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .columna-titulo{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--azul);padding-bottom:6px;border-bottom:2px solid var(--gris);margin-bottom:8px;}
+  .columna{display:flex;flex-direction:column;gap:8px;}
+  .ficha{padding:12px 10px;font-size:14px;font-weight:600;text-align:center;background:#fff;border:2px solid var(--gris);border-radius:9px;cursor:pointer;transition:.12s;min-height:62px;display:flex;align-items:center;justify-content:center;user-select:none;}
+  .ficha.sinonimo{font-weight:500;font-style:italic;font-size:13px;}
+  .ficha.elegida{border-color:var(--azul);background:var(--azul-claro);}
+  .ficha.acierto{border-color:var(--verde);background:var(--verde-claro);color:var(--verde);cursor:default;opacity:.65;}
+  .ficha.error{border-color:var(--rojo);background:var(--rojo-claro);animation:sacudir .3s;}
+  @keyframes sacudir{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+  .progreso{display:flex;gap:5px;margin:16px 0 4px;}
+  .paso{flex:1;height:6px;background:var(--gris);border-radius:3px;}
+  .paso.hecho{background:var(--verde);} .paso.actual{background:var(--ambar);}
+
+  /* E2 rosco */
+  .rosco{position:relative;width:min(300px,80vw);height:min(300px,80vw);margin:4px auto 14px;}
+  .letra{position:absolute;width:32px;height:32px;margin:-16px 0 0 -16px;border-radius:50%;background:var(--azul);color:#fff;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;border:3px solid transparent;}
+  .letra.actual{border-color:var(--ambar);transform:scale(1.2);}
+  .letra.ok{background:var(--verde);} .letra.mal{background:var(--rojo);} .letra.pasada{background:#6B8FB3;}
+  .centro{position:absolute;inset:22%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;}
+  .centro .grande{font-size:30px;font-weight:800;color:var(--azul);line-height:1;}
+  .centro .peq{font-size:12px;}
+  .pista{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--ambar);margin-bottom:4px;}
+  .definicion{font-size:16px;padding:14px;border:2px solid var(--azul);border-radius:10px;background:var(--azul-claro);margin-bottom:12px;min-height:80px;}
+  .fila-botones{display:flex;gap:10px;} .fila-botones button{flex:1;margin-top:0;}
+  .retro{font-size:14px;font-weight:600;min-height:22px;margin:10px 0 0;}
+  .retro.ok{color:var(--verde);} .retro.mal{color:var(--rojo);}
+
+  /* E3 / E4 / E5 */
+  .situacion{font-size:16px;padding:14px;border-left:5px solid var(--ambar);background:var(--ambar-claro);border-radius:8px;margin-bottom:8px;}
+  .pregunta{font-size:15px;font-weight:700;margin:0 0 12px;}
+  .opcion{display:block;width:100%;text-align:left;padding:13px 14px;margin-bottom:9px;font-size:15px;font-weight:600;background:#fff;border:2px solid var(--gris);border-radius:9px;cursor:pointer;color:var(--texto);}
+  .opcion .l{display:inline-block;width:24px;color:var(--azul);font-weight:800;}
+  .opcion small{display:block;font-weight:400;font-size:12.5px;margin-left:24px;}
+  .opcion.correcta{border-color:var(--verde);background:var(--verde-claro);}
+  .opcion.incorrecta{border-color:var(--rojo);background:var(--rojo-claro);}
+  .opcion:disabled{cursor:default;}
+  .explica{font-size:14px;padding:10px 12px;border-radius:8px;background:#F4F6F8;margin:4px 0 12px;display:none;}
+  .explica.visible{display:block;}
+  .frase{font-size:17px;line-height:1.9;padding:14px;border-left:5px solid var(--ambar);background:var(--ambar-claro);border-radius:8px;margin-bottom:10px;}
+  .pal{display:inline-block;padding:0 7px;margin:0 1px;border:2px solid var(--azul);border-radius:7px;background:#fff;font-weight:700;color:var(--azul);cursor:pointer;line-height:1.5;}
+  .pal.sospechoso{border-color:var(--rojo);background:var(--rojo-claro);color:var(--rojo);}
+  .pal.culpable{border-color:var(--verde);background:var(--verde-claro);color:var(--verde);}
+  .pal.inocente{border-color:var(--gris);color:#555;background:#F4F6F8;}
+  .termino-grande{font-size:26px;font-weight:800;text-align:center;color:var(--azul);padding:18px 10px;border:2px solid var(--azul);border-radius:12px;background:var(--azul-claro);margin-bottom:12px;}
+
+  /* E6 crucigrama */
+  .cruci-wrap{overflow-x:auto;margin-bottom:10px;}
+  .cruci{display:grid;gap:2px;width:max-content;margin:0 auto;}
+  .cel{width:var(--cel,27px);height:var(--cel,27px);position:relative;}
+  .cel.on{background:#fff;border:1.5px solid #6B7B8C;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:calc(var(--cel,27px) * .55);color:var(--azul);cursor:pointer;}
+  .cel.on.sel{background:var(--ambar-claro);border-color:var(--ambar);}
+  .cel.on.fija{background:var(--verde-claro);border-color:var(--verde);color:var(--verde);}
+  .cel .num{position:absolute;top:0;left:1px;font-size:9px;font-weight:700;color:#444;line-height:1;}
+  .pistaCruci{font-size:15px;padding:10px 12px;border:2px solid var(--azul);border-radius:10px;background:var(--azul-claro);margin-bottom:10px;min-height:64px;}
+  .listaPistas{font-size:13.5px;margin-top:14px;}
+  .listaPistas h3{font-size:14px;margin:10px 0 4px;color:var(--azul);}
+  .listaPistas .p{padding:7px 8px;border-radius:7px;cursor:pointer;margin-bottom:3px;border:1px solid transparent;}
+  .listaPistas .p.sel{background:var(--ambar-claro);border-color:var(--ambar);}
+  .listaPistas .p.ok{color:var(--verde);text-decoration:line-through;}
+
+  /* resultados */
+  .puntajes{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0;}
+  .caja{border:2px solid var(--gris);border-radius:10px;padding:8px;text-align:center;}
+  .caja .n{font-size:22px;font-weight:800;color:var(--azul);} .caja .t{font-size:12px;} .caja .m{font-size:11px;color:#444;}
+  .total{font-size:18px;font-weight:700;text-align:center;padding:12px;border-radius:10px;background:var(--azul);color:#fff;margin-bottom:8px;}
+  .rango{font-size:15px;text-align:center;padding:10px;border-radius:10px;background:var(--ambar-claro);border:2px solid var(--ambar);margin-bottom:14px;}
+  .rango b{color:var(--ambar);font-size:18px;display:block;}
+  .logros{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px;}
+  .logro{border:2px solid var(--gris);border-radius:9px;padding:8px 10px;font-size:12.5px;color:#555;background:#F4F6F8;}
+  .logro b{display:block;font-size:13.5px;}
+  .logro.ganado{border-color:var(--verde);background:var(--verde-claro);color:#000;}
+  .logro.ganado b{color:var(--verde);}
+  .refuerzo{border:2px solid var(--gris);border-radius:9px;padding:10px 12px;margin-bottom:8px;}
+  .refuerzo .t{font-weight:700;color:var(--azul);} .refuerzo .d{font-size:13.5px;} .refuerzo .s{font-size:12.5px;font-style:italic;}
+  .cabecera-alumno{font-size:14px;margin-bottom:6px;}
+  @media (max-width:380px){ .ficha{font-size:13px;padding:10px 7px;} .logros{grid-template-columns:1fr;} }
+  @media (min-width:700px){ .app{padding-top:28px;} }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <section id="pIngreso" class="pantalla activa">
+    <h1>Torneo del Vocabulario de Probabilidad</h1>
+    <p class="sub">IV Medio · Matemática M1 · 6 estaciones · 30 minutos · gana quien más puntos junte</p>
+    <label for="nombre">Nombre y apellido</label>
+    <input type="text" id="nombre" autocomplete="off" placeholder="Ej: Sofía Muñoz">
+    <div class="errorCampo" id="errNombre">Escribe tu nombre y apellido.</div>
+    <label for="curso">Curso</label>
+    <select id="curso">
+      <option value="">Elige tu curso</option>
+      <option>4° Medio C</option>
+      <option>4° Medio D</option>
+    </select>
+    <div class="errorCampo" id="errCurso">Elige tu curso.</div>
+    <div class="nota"><b>Cómo se puntúa:</b> cada acierto da puntos. Si aciertas varias seguidas se activa el <b>combo</b> (×1,5 desde la 4.ª seguida y ×2 desde la 7.ª). Equivocarte rompe el combo. Al final verás tu rango, tus logros y los términos que te conviene repasar.</div>
+    <button class="principal" id="btnEntrar">Comenzar el torneo</button>
+  </section>
+
+  <section id="pMenu" class="pantalla">
+    <div class="cabecera-alumno" id="saludo"></div>
+    <h1>Las 6 estaciones</h1>
+    <div class="nota">Sigue el orden que indique el profesor. Cada estación tiene su propio reloj y se juega una sola vez. Todos los términos son los 30 de la prueba de vocabulario.</div>
+    <button class="estacion" id="mE1"><span class="tag">Estación 1 · 5 min</span><div class="nom">Parejas de sinónimos</div><div class="desc">Une cada término con sus sinónimos. 5 rondas, los 30 términos.</div></button>
+    <button class="estacion" id="mE2"><span class="tag">Estación 2 · 6 min</span><div class="nom">El rosco</div><div class="desc">Lee la definición y escribe el término. Puedes decir «Pasapalabra».</div></button>
+    <button class="estacion" id="mE3"><span class="tag">Estación 3 · 3 min</span><div class="nom">¿Qué término es?</div><div class="desc">Lee una situación y elige el término que la describe.</div></button>
+    <button class="estacion" id="mE4"><span class="tag">Estación 4 · 4 min</span><div class="nom">Detective de errores</div><div class="desc">En cada frase hay un término mal usado. Encuéntralo.</div></button>
+    <button class="estacion" id="mE5"><span class="tag">Estación 5 · 3 min</span><div class="nom">Clasificador</div><div class="desc">Ubica cada término en el grupo de ideas al que pertenece.</div></button>
+    <button class="estacion" id="mE6"><span class="tag">Estación 6 · 5 min</span><div class="nom">Crucigrama</div><div class="desc">Resuelve el crucigrama a partir de las definiciones.</div></button>
+    <button class="secundario" id="btnVerResultados">Terminar y ver resultados</button>
+  </section>
+
+  <section id="pE1" class="pantalla">
+    <div class="barra"><span class="ronda" id="e1Ronda">Ronda 1 de 5</span><span class="reloj" id="e1Reloj">5:00</span></div>
+    <div class="marcador"></div>
+    <div class="titulo-ronda">Estación 1 · Parejas de sinónimos</div>
+    <p class="sub" style="margin-bottom:12px">Toca un término y luego sus sinónimos.</p>
+    <div class="tablero">
+      <div><div class="columna-titulo">Término</div><div class="columna" id="colT"></div></div>
+      <div><div class="columna-titulo">Sinónimos</div><div class="columna" id="colS"></div></div>
+    </div>
+    <div class="progreso" id="e1Prog"></div>
+  </section>
+
+  <section id="pE2" class="pantalla">
+    <div class="barra"><span class="ronda">Estación 2 · El rosco</span><span class="reloj" id="e2Reloj">6:00</span></div>
+    <div class="marcador"></div>
+    <div class="rosco" id="rosco"><div class="centro"><div class="grande" id="e2Aciertos">0</div><div class="peq">aciertos</div><div class="peq" id="e2Quedan"></div></div></div>
+    <div class="pista" id="e2Pista"></div>
+    <div class="definicion" id="e2Def"></div>
+    <input type="text" id="e2Resp" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Escribe el término">
+    <div class="fila-botones">
+      <button class="principal" id="e2Responder">Responder</button>
+      <button class="secundario" id="e2Pasar">Pasapalabra</button>
+    </div>
+    <div class="retro" id="e2Retro"></div>
+  </section>
+
+  <section id="pE3" class="pantalla">
+    <div class="barra"><span class="ronda" id="e3Num">Situación 1 de 15</span><span class="reloj" id="e3Reloj">3:00</span></div>
+    <div class="marcador"></div>
+    <div class="situacion" id="e3Sit"></div>
+    <p class="pregunta" id="e3Preg"></p>
+    <div id="e3Ops"></div>
+    <div class="explica" id="e3Exp"></div>
+    <button class="principal" id="e3Sig" style="display:none">Siguiente</button>
+  </section>
+
+  <section id="pE4" class="pantalla">
+    <div class="barra"><span class="ronda" id="e4Num">Frase 1 de 15</span><span class="reloj" id="e4Reloj">4:00</span></div>
+    <div class="marcador"></div>
+    <p class="pregunta">Una de las tres palabras marcadas está mal usada. Toca la que corresponde al error.</p>
+    <div class="frase" id="e4Frase"></div>
+    <div class="explica" id="e4Exp"></div>
+    <button class="principal" id="e4Sig" style="display:none">Siguiente</button>
+  </section>
+
+  <section id="pE5" class="pantalla">
+    <div class="barra"><span class="ronda" id="e5Num">Término 1 de 15</span><span class="reloj" id="e5Reloj">3:00</span></div>
+    <div class="marcador"></div>
+    <p class="pregunta">¿A qué grupo de ideas pertenece este término?</p>
+    <div class="termino-grande" id="e5Term"></div>
+    <div id="e5Ops"></div>
+    <div class="retro" id="e5Retro"></div>
+  </section>
+
+  <section id="pE6" class="pantalla">
+    <div class="barra"><span class="ronda">Estación 6 · Crucigrama</span><span class="reloj" id="e6Reloj">5:00</span></div>
+    <div class="marcador"></div>
+    <div class="cruci-wrap"><div class="cruci" id="cruci"></div></div>
+    <div class="pistaCruci" id="e6Pista">Toca una casilla numerada o una pista de la lista.</div>
+    <input type="text" id="e6Resp" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Escribe la palabra completa">
+    <div class="fila-botones">
+      <button class="principal" id="e6Responder">Responder</button>
+      <button class="secundario" id="e6Pista1">Pista (vale la mitad)</button>
+    </div>
+    <div class="retro" id="e6Retro"></div>
+    <div class="listaPistas" id="e6Lista"></div>
+    <button class="secundario" id="e6Terminar">Terminar el crucigrama</button>
+  </section>
+
+  <section id="pFinEst" class="pantalla">
+    <h1 id="finEstTitulo"></h1>
+    <p class="sub" id="finEstTexto"></p>
+    <button class="principal" id="finEstVolver">Volver a las estaciones</button>
+  </section>
+
+  <section id="pFin" class="pantalla">
+    <div class="cabecera-alumno" id="finAlumno"></div>
+    <h1>Resultados del torneo</h1>
+    <div class="total" id="rTotal"></div>
+    <div class="rango" id="rRango"></div>
+    <div class="puntajes" id="rCajas"></div>
+    <h2>Logros</h2>
+    <div class="logros" id="rLogros"></div>
+    <h2 id="tituloRefuerzo">Términos que debes reforzar</h2>
+    <p class="sub" id="subRefuerzo"></p>
+    <div id="listaRefuerzo"></div>
+    <button class="secundario" id="btnCopiar">Copiar resumen</button>
+    <button class="secundario" id="btnVolverMenu">Volver a las estaciones</button>
+  </section>
+</div>
+
+<script>
+"use strict";
+/* ============ Banco: los 30 términos del PDF «Vocabulario de Probabilidad» (octubre) ============
+   t: término · s: sinónimos · d: definición · sit/q/ops: situación (ops[0] = correcta) */
+const T = [
+ {t:"Experimento aleatorio", s:["Ensayo al azar","Prueba fortuita"],
+  d:"Acción cuyo resultado no se puede anticipar con certeza, aunque se conocen todos los resultados que puede tener.",
+  sit:"Lanzamos una moneda: sabemos que puede salir cara o sello, pero no sabemos cuál saldrá.", q:"¿Qué tipo de acción es lanzar la moneda?",
+  ops:["Experimento aleatorio","Evento","Espacio muestral","Predicción"]},
+ {t:"Azar", s:["Casualidad","Incertidumbre"],
+  d:"Causa impredecible a la que atribuimos que ocurra un resultado y no otro.",
+  sit:"En un sorteo limpio nadie puede anticipar qué número va a salir.", q:"¿Qué decide el resultado?",
+  ops:["Azar","Certeza","Tendencia","Dependencia"]},
+ {t:"Ensayo", s:["Intento","Repetición"],
+  d:"Cada una de las veces que se realiza un experimento aleatorio.",
+  sit:"El curso lanzó un dado 50 veces y anotó cada resultado.", q:"¿Cómo se llama cada uno de esos lanzamientos?",
+  ops:["Ensayo","Evento","Espacio muestral","Simulación"]},
+ {t:"Espacio muestral", s:["Universo de resultados","Conjunto de posibilidades"],
+  d:"Conjunto formado por todos los resultados posibles de un experimento aleatorio.",
+  sit:"Al lanzar un dado escribimos el conjunto {1, 2, 3, 4, 5, 6}.", q:"¿Qué nombre recibe ese conjunto?",
+  ops:["Espacio muestral","Casos favorables","Ensayo","Diagrama de Venn"]},
+ {t:"Evento", s:["Suceso","Acontecimiento"],
+  d:"Uno o varios resultados del espacio muestral que nos interesa estudiar.",
+  sit:"Al lanzar un dado nos interesa «obtener un número par», que agrupa solo algunos de los resultados.", q:"¿Qué es «obtener un número par»?",
+  ops:["Evento","Ensayo","Espacio muestral","Azar"]},
+ {t:"Casos favorables", s:["Resultados buscados","Opciones válidas"],
+  d:"Resultados de un experimento que cumplen la condición del evento que se estudia.",
+  sit:"Queremos sacar un as de un naipe inglés, y en el naipe hay cuatro ases.", q:"¿Qué representan esas cuatro cartas?",
+  ops:["Casos favorables","Casos posibles","Espacio muestral","Mutuamente excluyentes"]},
+ {t:"Casos posibles", s:["Alternativas totales","Resultados admisibles"],
+  d:"Total de resultados que pueden ocurrir en un experimento.",
+  sit:"En una urna hay 12 bolitas numeradas y se saca una sin mirar.", q:"¿Qué representan las 12 bolitas?",
+  ops:["Casos posibles","Casos favorables","Equiprobabilidad","Extracción"]},
+ {t:"Regla de Laplace", s:["Definición clásica","Cociente de casos"],
+  d:"Forma de calcular la probabilidad como el cociente entre casos favorables y casos posibles, cuando todos los resultados son igual de probables.",
+  sit:"Como todos los resultados tienen la misma posibilidad, dividimos los casos favorables por los casos posibles.", q:"¿Qué regla estamos usando?",
+  ops:["Regla de Laplace","Regla aditiva","Regla multiplicativa","Frecuencia relativa"]},
+ {t:"Probabilidad", s:["Posibilidad","Chance"],
+  d:"Número entre 0 y 1 que mide qué tan posible es que ocurra un evento.",
+  sit:"La app del clima informa un 0,7 de posibilidad de lluvia para mañana.", q:"¿Qué mide ese 0,7?",
+  ops:["Probabilidad","Tendencia","Certeza","Predicción"]},
+ {t:"Equiprobabilidad", s:["Uniformidad","Igual posibilidad"],
+  d:"Situación en la que todos los resultados de un experimento tienen la misma posibilidad de ocurrir.",
+  sit:"En un dado cargado, la cara 6 sale mucho más seguido que las demás.", q:"¿Qué característica NO cumple ese dado?",
+  ops:["Equiprobabilidad","Independencia","Reposición","Certeza"]},
+ {t:"Porcentaje", s:["Tanto por ciento","Fracción de cien"],
+  d:"Forma de expresar una proporción como una cantidad de cada cien.",
+  sit:"La probabilidad de lluvia se informó como «30 de cada 100».", q:"¿En qué forma se expresó?",
+  ops:["Porcentaje","Frecuencia relativa","Complemento","Tendencia"]},
+ {t:"Frecuencia relativa", s:["Proporción","Cantidad observada"],
+  d:"Cociente entre las veces que ocurrió un resultado y el total de repeticiones del experimento.",
+  sit:"Lanzamos una moneda 40 veces y salió cara 18 veces. Anotamos 18/40.", q:"¿Qué nombre recibe 18/40?",
+  ops:["Frecuencia relativa","Regla de Laplace","Porcentaje","Equiprobabilidad"]},
+ {t:"Tendencia", s:["Patrón","Regularidad"],
+  d:"Comportamiento o patrón que muestran los resultados cuando un experimento se repite muchas veces.",
+  sit:"Al repetir el lanzamiento miles de veces, la proporción de caras se acerca cada vez más a 0,5.", q:"¿Qué describe ese comportamiento?",
+  ops:["Tendencia","Predicción","Certeza","Dependencia"]},
+ {t:"Simulación", s:["Recreación","Ensayo repetido"],
+  d:"Reproducción de un experimento aleatorio mediante un modelo, como un programa de computador, para estudiar sus resultados.",
+  sit:"Como no podíamos lanzar un dado mil veces a mano, usamos un programa que imita los lanzamientos.", q:"¿Qué hicimos?",
+  ops:["Simulación","Extracción","Predicción","Intersección"]},
+ {t:"Certeza", s:["Seguridad total","Ocurrencia garantizada"],
+  d:"Característica de un evento que ocurre siempre; su probabilidad es 1.",
+  sit:"Al lanzar un dado común, sale un número menor que 7.", q:"¿Qué característica tiene ese evento?",
+  ops:["Certeza","Imposibilidad","Predicción","Tendencia"]},
+ {t:"Imposibilidad", s:["Nulidad","Descarte absoluto"],
+  d:"Característica de un evento que nunca puede ocurrir; su probabilidad es 0.",
+  sit:"Queremos sacar una bolita verde de una urna que solo tiene bolitas rojas y azules.", q:"¿Qué característica tiene ese evento?",
+  ops:["Imposibilidad","Certeza","Complemento","Dependencia"]},
+ {t:"Complemento", s:["Contrario","Negación"],
+  d:"Evento formado por todos los resultados que NO pertenecen a un evento dado.",
+  sit:"Si el evento es «aprobar la prueba», su contrario es «no aprobar la prueba».", q:"¿Qué es «no aprobar» respecto de «aprobar»?",
+  ops:["Complemento","Intersección","Unión","Imposibilidad"]},
+ {t:"Unión", s:["Reunión","Disyunción"],
+  d:"Evento que ocurre cuando sucede al menos uno de dos eventos; se asocia a la palabra «o».",
+  sit:"De un naipe nos sirve cualquier carta que sea rey o que sea de corazón.", q:"¿Qué operación entre eventos es «rey o corazón»?",
+  ops:["Unión","Intersección","Complemento","Independencia"]},
+ {t:"Intersección", s:["Coincidencia","Ocurrencia simultánea"],
+  d:"Evento que ocurre cuando suceden dos eventos a la vez; se asocia a la palabra «y».",
+  sit:"De un naipe solo nos sirve la carta que es rey y, al mismo tiempo, de corazón.", q:"¿Qué operación entre eventos es «rey y corazón»?",
+  ops:["Intersección","Unión","Complemento","Reposición"]},
+ {t:"Mutuamente excluyentes", s:["Incompatibles","Disjuntos"],
+  d:"Eventos que no pueden ocurrir al mismo tiempo porque no tienen resultados en común.",
+  sit:"En un solo lanzamiento de un dado, «sacar un 2» y «sacar un 5» no pueden ocurrir a la vez.", q:"¿Cómo se llaman estos eventos?",
+  ops:["Mutuamente excluyentes","Independencia","Dependencia","Equiprobabilidad"]},
+ {t:"Diagrama de Venn", s:["Esquema de conjuntos","Círculos superpuestos"],
+  d:"Representación de eventos mediante círculos dentro de un rectángulo que representa el espacio muestral.",
+  sit:"Dibujamos un rectángulo con dos círculos que se cruzan: quiénes juegan fútbol, quiénes básquetbol y quiénes ambos.", q:"¿Qué representación usamos?",
+  ops:["Diagrama de Venn","Diagrama de árbol","Tabla de doble entrada","Espacio muestral"]},
+ {t:"Regla aditiva", s:["Suma de probabilidades","Criterio del \"o\""],
+  d:"Regla para la probabilidad de que ocurra un evento u otro: se suman sus probabilidades y se resta lo que tienen en común.",
+  sit:"Queremos la probabilidad de sacar una carta que sea «trébol o figura».", q:"¿Qué regla corresponde?",
+  ops:["Regla aditiva","Regla multiplicativa","Complemento","Independencia"]},
+ {t:"Regla multiplicativa", s:["Producto de probabilidades","Criterio del \"y\""],
+  d:"Regla para la probabilidad de que ocurran dos eventos, uno y otro, multiplicando sus probabilidades.",
+  sit:"Queremos la probabilidad de que salga cara en la moneda y un 6 en el dado.", q:"¿Qué regla corresponde?",
+  ops:["Regla multiplicativa","Regla aditiva","Unión","Mutuamente excluyentes"]},
+ {t:"Independencia", s:["Autonomía","Ausencia de influencia"],
+  d:"Relación entre dos eventos cuando la ocurrencia de uno no cambia la probabilidad del otro.",
+  sit:"Sacamos una bolita, la devolvemos y volvemos a sacar: lo que salió primero no influye en la segunda extracción.", q:"¿Qué relación tienen los dos eventos?",
+  ops:["Independencia","Dependencia","Mutuamente excluyentes","Intersección"]},
+ {t:"Dependencia", s:["Vinculación","Influencia mutua"],
+  d:"Relación entre dos eventos cuando la ocurrencia de uno sí cambia la probabilidad del otro.",
+  sit:"Sacamos una bolita y NO la devolvemos: quedan menos bolitas y cambia la probabilidad de la segunda.", q:"¿Qué relación tienen los dos eventos?",
+  ops:["Dependencia","Independencia","Mutuamente excluyentes","Complemento"]},
+ {t:"Extracción", s:["Sorteo","Selección"],
+  d:"Acción de sacar al azar un elemento de un conjunto, como una bolita de una urna.",
+  sit:"El profesor mete la mano en la urna y saca una ficha sin mirar.", q:"¿Cómo se llama esa acción?",
+  ops:["Extracción","Reposición","Simulación","Predicción"]},
+ {t:"Reposición", s:["Reemplazo","Devolución"],
+  d:"Acción de devolver el elemento extraído antes de realizar la siguiente extracción.",
+  sit:"Después de anotar el color, la bolita se vuelve a meter en la urna antes de sacar otra.", q:"¿Cómo se llama esa acción?",
+  ops:["Reposición","Extracción","Independencia","Complemento"]},
+ {t:"Diagrama de árbol", s:["Esquema ramificado","Ramificación"],
+  d:"Esquema de ramas que muestra, etapa por etapa, todos los resultados de un experimento.",
+  sit:"Para mostrar los resultados de lanzar una moneda tres veces, dibujamos ramas que se abren en cada lanzamiento.", q:"¿Qué representación usamos?",
+  ops:["Diagrama de árbol","Diagrama de Venn","Tabla de doble entrada","Simulación"]},
+ {t:"Tabla de doble entrada", s:["Tabla de contingencia","Cuadro cruzado"],
+  d:"Cuadro que organiza datos según dos variables: una en las filas y otra en las columnas.",
+  sit:"Organizamos a los estudiantes del curso por jornada (filas) y por deporte favorito (columnas).", q:"¿Qué representación usamos?",
+  ops:["Tabla de doble entrada","Diagrama de Venn","Diagrama de árbol","Espacio muestral"]},
+ {t:"Predicción", s:["Pronóstico","Anticipación"],
+  d:"Anticipación razonada de lo que podría ocurrir, basada en probabilidades o en datos.",
+  sit:"Con los datos de los últimos años, el meteorólogo anuncia que mañana probablemente llueva.", q:"¿Cómo se llama ese anuncio?",
+  ops:["Predicción","Certeza","Tendencia","Simulación"]}
+];
+
+/* Estación 4: frases con UN término mal usado. c = palabras marcadas; mal:true = la mal empleada;
+   ok = término que debía ir; por = razón. */
+const D = [
+ {txt:"En un solo lanzamiento de un dado, «sacar 2» y «sacar 5» son dos {0} {1} dentro del {2}.",
+  c:[{w:"eventos",t:"Evento"},{w:"independientes",t:"Independencia",mal:true,ok:"Mutuamente excluyentes"},{w:"espacio muestral",t:"Espacio muestral"}],
+  por:"No pueden ocurrir a la vez, así que son mutuamente excluyentes. La independencia habla de si un evento influye en la probabilidad del otro."},
+ {txt:"Un evento que ocurre siempre tiene {0} 1 y se dice que hay {1}; su {2} es el evento que nunca ocurre.",
+  c:[{w:"probabilidad",t:"Probabilidad"},{w:"imposibilidad",t:"Imposibilidad",mal:true,ok:"Certeza"},{w:"complemento",t:"Complemento"}],
+  por:"Si el evento ocurre siempre, su probabilidad es 1 y hay certeza. La imposibilidad corresponde al evento que nunca ocurre."},
+ {txt:"La {0} divide los {1} por los casos posibles cuando existe {2}.",
+  c:[{w:"regla multiplicativa",t:"Regla multiplicativa",mal:true,ok:"Regla de Laplace"},{w:"casos favorables",t:"Casos favorables"},{w:"equiprobabilidad",t:"Equiprobabilidad"}],
+  por:"Dividir casos favorables por casos posibles, cuando todos los resultados son igual de probables, es la regla de Laplace."},
+ {txt:"Si devolvemos la bolita a la urna antes de la segunda {0}, hay {1} y entre los dos eventos hay {2}.",
+  c:[{w:"extracción",t:"Extracción"},{w:"reposición",t:"Reposición"},{w:"dependencia",t:"Dependencia",mal:true,ok:"Independencia"}],
+  por:"Al devolver la bolita, lo que salió primero no cambia la probabilidad de la segunda extracción: hay independencia."},
+ {txt:"La {0} de dos eventos se calcula con la {1}, restando lo que tienen en común, la {2}.",
+  c:[{w:"unión",t:"Unión"},{w:"regla multiplicativa",t:"Regla multiplicativa",mal:true,ok:"Regla aditiva"},{w:"intersección",t:"Intersección"}],
+  por:"Para «A o B» se suman las probabilidades y se resta la intersección: es la regla aditiva."},
+ {txt:"Una {0} cruza dos variables en filas y columnas, el {1} reúne todos los resultados posibles y un {2} muestra con ramas cada etapa del experimento.",
+  c:[{w:"tabla de doble entrada",t:"Tabla de doble entrada"},{w:"espacio muestral",t:"Espacio muestral"},{w:"diagrama de Venn",t:"Diagrama de Venn",mal:true,ok:"Diagrama de árbol"}],
+  por:"Las ramas que muestran cada etapa son un diagrama de árbol. El diagrama de Venn usa círculos."},
+ {txt:"Al repetir muchas veces un experimento, la {0} muestra una {1}; con base en ella se hace una {2}, es decir, una anticipación de lo que podría ocurrir.",
+  c:[{w:"frecuencia relativa",t:"Frecuencia relativa"},{w:"tendencia",t:"Tendencia"},{w:"simulación",t:"Simulación",mal:true,ok:"Predicción"}],
+  por:"Anticipar lo que podría ocurrir es una predicción. La simulación reproduce el experimento con un modelo."},
+ {txt:"Reproducir con un programa de computador un experimento mil veces es una {0}; cada repetición es un {1} y el resultado depende del {2}.",
+  c:[{w:"predicción",t:"Predicción",mal:true,ok:"Simulación"},{w:"ensayo",t:"Ensayo"},{w:"azar",t:"Azar"}],
+  por:"Imitar el experimento con un programa es una simulación. La predicción anticipa lo que podría ocurrir."},
+ {txt:"En un {0} se conocen los resultados del {1}, pero no se puede anticipar cuál ocurrirá porque interviene la {2}.",
+  c:[{w:"experimento aleatorio",t:"Experimento aleatorio"},{w:"espacio muestral",t:"Espacio muestral"},{w:"certeza",t:"Certeza",mal:true,ok:"Azar"}],
+  por:"Lo que impide anticipar el resultado es el azar. La certeza es la característica de un evento que ocurre siempre."},
+ {txt:"Si el {0} es «aprobar el control», «no aprobar» es su {1}, y la {2} de ambos suma 1.",
+  c:[{w:"evento",t:"Evento"},{w:"unión",t:"Unión",mal:true,ok:"Complemento"},{w:"probabilidad",t:"Probabilidad"}],
+  por:"«No aprobar» es lo contrario de «aprobar»: su complemento."},
+ {txt:"«Ser rey y ser de corazón a la vez» es la {0} de ambos eventos; el naipe tiene 52 {1} y 4 {2} para ser rey.",
+  c:[{w:"unión",t:"Unión",mal:true,ok:"Intersección"},{w:"casos posibles",t:"Casos posibles"},{w:"casos favorables",t:"Casos favorables"}],
+  por:"Cuando los dos eventos ocurren a la vez (la palabra «y») hablamos de intersección. La unión se asocia a la palabra «o»."},
+ {txt:"Al hacer una {0} de una urna con solo bolitas rojas y azules, sacar una verde es un caso de {1}, pues su {2} es 0.",
+  c:[{w:"extracción",t:"Extracción"},{w:"certeza",t:"Certeza",mal:true,ok:"Imposibilidad"},{w:"probabilidad",t:"Probabilidad"}],
+  por:"Un evento que nunca puede ocurrir tiene probabilidad 0: es una imposibilidad."},
+ {txt:"Al sacar dos bolitas sin {0}, el resultado de la primera cambia la probabilidad de la segunda, por lo que hay {1} y se aplica la {2}.",
+  c:[{w:"reposición",t:"Reposición"},{w:"independencia",t:"Independencia",mal:true,ok:"Dependencia"},{w:"regla multiplicativa",t:"Regla multiplicativa"}],
+  por:"Si lo que ocurre primero cambia la probabilidad del segundo evento, hay dependencia."},
+ {txt:"La {0} de un {1} es un número entre 0 y 1; si queremos expresarla como una cantidad de cada cien, la damos como {2} y escribimos, por ejemplo, 30 %.",
+  c:[{w:"probabilidad",t:"Probabilidad"},{w:"evento",t:"Evento"},{w:"tendencia",t:"Tendencia",mal:true,ok:"Porcentaje"}],
+  por:"Expresar una proporción como una cantidad de cada cien es un porcentaje."},
+ {txt:"Todas las caras de un dado común tienen la misma posibilidad de salir; esa característica se llama {0} y permite aplicar la {1} a un {2}.",
+  c:[{w:"tendencia",t:"Tendencia",mal:true,ok:"Equiprobabilidad"},{w:"regla de Laplace",t:"Regla de Laplace"},{w:"espacio muestral",t:"Espacio muestral"}],
+  por:"Que todos los resultados tengan la misma posibilidad se llama equiprobabilidad."}
+];
+
+/* Estación 5: grupos de ideas (los 30 términos repartidos sin repetir) */
+const CATS = [
+ {n:"El experimento", d:"Lo que se hace, se repite o se imita", ts:["Experimento aleatorio","Azar","Ensayo","Simulación","Extracción","Reposición"]},
+ {n:"Resultados y eventos", d:"Lo que puede ocurrir y cómo se nombra", ts:["Espacio muestral","Evento","Casos favorables","Casos posibles","Certeza","Imposibilidad","Complemento"]},
+ {n:"Medir la probabilidad", d:"Números y reglas para medir qué tan posible es algo", ts:["Probabilidad","Regla de Laplace","Equiprobabilidad","Porcentaje","Frecuencia relativa","Tendencia","Predicción"]},
+ {n:"Combinar y relacionar eventos", d:"Operaciones, reglas y relaciones entre dos eventos", ts:["Unión","Intersección","Mutuamente excluyentes","Regla aditiva","Regla multiplicativa","Independencia","Dependencia"]},
+ {n:"Representar", d:"Esquemas y tablas para organizar los resultados", ts:["Diagrama de Venn","Diagrama de árbol","Tabla de doble entrada"]}
+];
+
+/* Estación 6: crucigrama (palabras de una sola palabra, sin tildes en la grilla) */
+const CRUCI = {"H": 12, "W": 13, "words": [{"n": 1, "d": "V", "r": 0, "c": 0, "w": "SIMULACION", "t": "Simulación"}, {"n": 2, "d": "H", "r": 0, "c": 2, "w": "REPOSICION", "t": "Reposición"}, {"n": 3, "d": "V", "r": 0, "c": 9, "w": "INTERSECCION", "t": "Intersección"}, {"n": 4, "d": "V", "r": 2, "c": 3, "w": "PORCENTAJE", "t": "Porcentaje"}, {"n": 5, "d": "H", "r": 2, "c": 5, "w": "EVENTO", "t": "Evento"}, {"n": 6, "d": "H", "r": 3, "c": 0, "w": "UNION", "t": "Unión"}, {"n": 7, "d": "V", "r": 3, "c": 11, "w": "ENSAYO", "t": "Ensayo"}, {"n": 8, "d": "H", "r": 6, "c": 5, "w": "CERTEZA", "t": "Certeza"}, {"n": 9, "d": "H", "r": 9, "c": 3, "w": "AZAR", "t": "Azar"}, {"n": 10, "d": "H", "r": 11, "c": 0, "w": "INDEPENDENCIA", "t": "Independencia"}]};
+
+/* ============ Utilidades ============ */
+const $ = id => document.getElementById(id);
+function barajar(a){ const b=a.slice(); for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];} return b; }
+function norm(s){ return s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-zñ ]/g," ").replace(/\s+/g," ").trim(); }
+function lev(a,b){ const m=a.length,n=b.length; const d=Array.from({length:m+1},(_,i)=>[i].concat(Array(n).fill(0)));
+  for(let j=1;j<=n;j++) d[0][j]=j;
+  for(let i=1;i<=m;i++) for(let j=1;j<=n;j++) d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));
+  return d[m][n]; }
+function mostrar(id){ document.querySelectorAll(".pantalla").forEach(p=>p.classList.remove("activa")); $(id).classList.add("activa"); window.scrollTo(0,0); }
+function fmt(s){ const m=Math.floor(s/60), r=s%60; return m+":"+String(r).padStart(2,"0"); }
+function el(tag,cls,txt){ const e=document.createElement(tag); if(cls) e.className=cls; if(txt!==undefined) e.textContent=txt; return e; }
+function idx(nombre){ return T.findIndex(x=>x.t===nombre); }
+function coma(x){ return String(x).replace(".",","); }
+
+let reloj=null;
+function iniciarReloj(seg, nodo, alTerminar){
+  detenerReloj(); let r=seg; nodo.textContent=fmt(r); nodo.classList.remove("alerta");
+  reloj=setInterval(()=>{ r--; nodo.textContent=fmt(Math.max(r,0)); if(r<=30) nodo.classList.add("alerta");
+    if(r<=0){ detenerReloj(); alTerminar(); } },1000);
+}
+function detenerReloj(){ if(reloj){ clearInterval(reloj); reloj=null; } }
+
+/* ============ Puntaje y combo ============ */
+const NOMBRES = {e1:"Sinónimos",e2:"Rosco",e3:"¿Qué término es?",e4:"Detective",e5:"Clasificador",e6:"Crucigrama"};
+const BASE = {e1:5,e2:10,e3:10,e4:10,e5:10,e6:15};
+const NITEMS = {e1:30,e2:15,e3:15,e4:15,e5:15,e6:CRUCI.words.length};
+function mult(k){ return k<3?1:k<6?1.5:2; }
+function maxPts(e){ let s=0; for(let k=0;k<NITEMS[e];k++) s+=Math.round(BASE[e]*mult(k)); return s; }
+const E = { nombre:"", curso:"", done:{}, tiempo:{}, pts:{}, ac:{}, refuerzo:new Set(), mejorCombo:0 };
+let S = { est:null, combo:0 };
+function totalPts(){ return Object.values(E.pts).reduce((a,b)=>a+b,0); }
+function pintarMarcador(){
+  document.querySelectorAll(".marcador").forEach(m=>{
+    m.innerHTML="";
+    m.appendChild(el("span","","Puntos: "+totalPts()));
+    const c=el("span","combo"+(S.combo>=3?" fuego":""), "Combo ×"+coma(mult(S.combo)) + (S.combo?" ("+S.combo+" seguidas)":""));
+    m.appendChild(c);
+  });
+}
+function iniciarEst(e){ S.est=e; S.combo=0; E.pts[e]=E.pts[e]||0; E.ac[e]=E.ac[e]||0; pintarMarcador(); }
+function acertar(){
+  const p=Math.round(BASE[S.est]*mult(S.combo));
+  E.pts[S.est]+=p; E.ac[S.est]++; S.combo++; E.mejorCombo=Math.max(E.mejorCombo,S.combo); pintarMarcador(); return p;
+}
+function fallar(){ S.combo=0; pintarMarcador(); }
+
+/* ============ Ingreso y menú ============ */
+let idxRosco=[], idxSit=[];
+$("btnEntrar").onclick = ()=>{
+  const n=$("nombre").value.trim(), c=$("curso").value;
+  $("errNombre").classList.toggle("visible", n.split(/\s+/).length<2);
+  $("errCurso").classList.toggle("visible", !c);
+  if(n.split(/\s+/).length<2 || !c) return;
+  E.nombre=n; E.curso=c;
+  const orden=barajar([...Array(30).keys()]);
+  idxRosco=orden.slice(0,15); idxSit=orden.slice(15);   // rosco + situaciones/clasificador cubren los 30
+  irMenu();
+};
+function irMenu(){
+  detenerReloj();
+  $("saludo").textContent = E.nombre+" · "+E.curso+" · "+totalPts()+" puntos";
+  ["e1","e2","e3","e4","e5","e6"].forEach(e=>$("m"+e.toUpperCase()).classList.toggle("hecha", !!E.done[e]));
+  mostrar("pMenu");
+}
+function finEstacion(e, titulo, texto, porTiempo){
+  detenerReloj(); E.done[e]=true; E.tiempo[e]=!!porTiempo;
+  $("finEstTitulo").textContent=titulo; $("finEstTexto").textContent=texto; mostrar("pFinEst");
+}
+$("finEstVolver").onclick = irMenu;
+
+/* ============ E1: parejas ============ */
+let e1={};
+$("mE1").onclick = ()=>{
+  if(E.done.e1) return;
+  iniciarEst("e1");
+  const orden=barajar([...Array(30).keys()]);
+  e1={rondas:[0,1,2,3,4].map(r=>orden.slice(r*6,r*6+6)), r:0, fallados:new Set(), errRonda:0, rondaLimpia:false, elegido:null, hechos:0};
+  const pr=$("e1Prog"); pr.innerHTML=""; for(let i=0;i<5;i++) pr.appendChild(el("div","paso"));
+  pintarRonda(); iniciarReloj(5*60, $("e1Reloj"), ()=>cerrarE1(true)); mostrar("pE1");
+};
+function pintarRonda(){
+  const ids=e1.rondas[e1.r]; e1.hechos=0; e1.elegido=null; e1.errRonda=0;
+  $("e1Ronda").textContent="Ronda "+(e1.r+1)+" de 5";
+  [...$("e1Prog").children].forEach((p,i)=>{ p.className="paso"+(i<e1.r?" hecho":i===e1.r?" actual":""); });
+  const cT=$("colT"), cS=$("colS"); cT.innerHTML=""; cS.innerHTML="";
+  barajar(ids).forEach(i=>{ const f=el("div","ficha",T[i].t); f.dataset.i=i; f.onclick=()=>elegirT(f); cT.appendChild(f); });
+  barajar(ids).forEach(i=>{ const f=el("div","ficha sinonimo",T[i].s.join(" · ")); f.dataset.i=i; f.onclick=()=>elegirS(f); cS.appendChild(f); });
+}
+function elegirT(f){
+  if(f.classList.contains("acierto")) return;
+  document.querySelectorAll("#colT .ficha").forEach(x=>x.classList.remove("elegida"));
+  f.classList.add("elegida"); e1.elegido=f;
+}
+function elegirS(f){
+  if(f.classList.contains("acierto") || !e1.elegido) return;
+  const it=+e1.elegido.dataset.i, is=+f.dataset.i;
+  if(it===is){
+    if(!e1.fallados.has(it)) acertar();
+    e1.elegido.classList.remove("elegida"); e1.elegido.classList.add("acierto"); f.classList.add("acierto");
+    e1.elegido=null; e1.hechos++;
+    if(e1.hechos===6){
+      if(e1.errRonda===0) e1.rondaLimpia=true;
+      e1.r++; if(e1.r<5) setTimeout(pintarRonda,350); else setTimeout(()=>cerrarE1(false),350);
+    }
+  } else {
+    e1.fallados.add(it); e1.errRonda++; fallar();
+    f.classList.add("error"); e1.elegido.classList.add("error");
+    const a=e1.elegido; setTimeout(()=>{ f.classList.remove("error"); a.classList.remove("error"); },400);
+  }
+}
+function cerrarE1(porTiempo){
+  if(E.done.e1) return;
+  if(porTiempo){ for(let r=e1.r;r<5;r++) e1.rondas[r].forEach(i=>{
+      const hecho = r===e1.r && [...document.querySelectorAll("#colT .ficha.acierto")].some(x=>+x.dataset.i===i);
+      if(!hecho) E.refuerzo.add(i); }); }
+  e1.fallados.forEach(i=>E.refuerzo.add(i));
+  E.rondaLimpia=e1.rondaLimpia;
+  finEstacion("e1", porTiempo?"Se acabó el tiempo":"¡Estación 1 lista!", "Parejas acertadas a la primera: "+E.ac.e1+" de 30 · "+E.pts.e1+" puntos.", porTiempo);
+}
+
+/* ============ E2: rosco ============ */
+let e2={};
+$("mE2").onclick = ()=>{
+  if(E.done.e2) return;
+  iniciarEst("e2");
+  e2={cola:idxRosco.slice(), pos:0};
+  const r=$("rosco"); r.querySelectorAll(".letra").forEach(x=>x.remove());
+  idxRosco.forEach((i,k)=>{
+    const ang=-Math.PI/2+2*Math.PI*k/15;
+    const L=el("div","letra",norm(T[i].t)[0].toUpperCase()); L.id="L"+i;
+    L.style.left=(50+44*Math.cos(ang))+"%"; L.style.top=(50+44*Math.sin(ang))+"%"; r.appendChild(L);
+  });
+  $("e2Retro").textContent=""; $("e2Retro").className="retro";
+  pintarRosco(); iniciarReloj(6*60, $("e2Reloj"), ()=>cerrarE2(true));
+  mostrar("pE2"); setTimeout(()=>$("e2Resp").focus(),100);
+};
+function actualRosco(){ return e2.cola[e2.pos]; }
+function pintarRosco(){
+  document.querySelectorAll("#rosco .letra").forEach(x=>x.classList.remove("actual"));
+  const i=actualRosco(); $("L"+i).classList.add("actual");
+  const ini=norm(T[i].t)[0].toUpperCase(), pal=T[i].t.split(" ").length;
+  $("e2Pista").textContent="Empieza con "+ini+(pal>1?" · "+pal+" palabras":"");
+  $("e2Def").textContent=T[i].d;
+  $("e2Aciertos").textContent=E.ac.e2; $("e2Quedan").textContent="quedan "+e2.cola.length;
+  $("e2Resp").value="";
+}
+function avanzarRosco(quitar){
+  if(quitar) e2.cola.splice(e2.pos,1); else e2.pos++;
+  if(e2.cola.length===0){ $("e2Aciertos").textContent=E.ac.e2; setTimeout(()=>cerrarE2(false),700); return; }
+  if(e2.pos>=e2.cola.length) e2.pos=0;
+  pintarRosco();
+}
+function evaluarRespuesta(txt, termino){
+  const a=norm(txt), b=norm(termino);
+  if(!a) return "vacio"; if(a===b) return "ok";
+  if(b.length>=6 && lev(a,b)<=1) return "casi";
+  return "mal";
+}
+$("e2Responder").onclick = ()=>{
+  if(!e2.cola || !e2.cola.length || E.done.e2) return;
+  const i=actualRosco(), res=evaluarRespuesta($("e2Resp").value, T[i].t);
+  if(res==="vacio"){ $("e2Resp").focus(); return; }
+  const R=$("e2Retro");
+  if(res==="ok"||res==="casi"){
+    const p=acertar(); $("L"+i).className="letra ok";
+    R.className="retro ok"; R.textContent=(res==="ok"?"¡Correcto! ":"¡Correcto! (ojo con la ortografía: "+T[i].t+") ")+"+"+p;
+  } else {
+    fallar(); $("L"+i).className="letra mal"; E.refuerzo.add(i);
+    R.className="retro mal"; R.textContent="Era: "+T[i].t;
+  }
+  avanzarRosco(true); $("e2Resp").focus();
+};
+$("e2Pasar").onclick = ()=>{
+  if(!e2.cola || !e2.cola.length || E.done.e2) return;
+  const i=actualRosco(); $("L"+i).className="letra pasada";
+  $("e2Retro").className="retro"; $("e2Retro").textContent="Pasapalabra: volverá al final.";
+  avanzarRosco(false); $("e2Resp").focus();
+};
+$("e2Resp").addEventListener("keydown", ev=>{ if(ev.key==="Enter"){ ev.preventDefault(); $("e2Responder").click(); } });
+function cerrarE2(porTiempo){
+  if(E.done.e2) return;
+  e2.cola.forEach(i=>E.refuerzo.add(i));
+  finEstacion("e2", porTiempo?"Se acabó el tiempo":"¡Rosco completo!", "Aciertos: "+E.ac.e2+" de 15 · "+E.pts.e2+" puntos.", porTiempo);
+}
+
+/* ============ E3: situaciones ============ */
+let e3={};
+$("mE3").onclick = ()=>{
+  if(E.done.e3) return;
+  iniciarEst("e3"); e3={orden:barajar(idxSit), k:0};
+  pintarSit(); iniciarReloj(3*60, $("e3Reloj"), ()=>cerrarE3(true)); mostrar("pE3");
+};
+function pintarSit(){
+  const it=T[e3.orden[e3.k]];
+  $("e3Num").textContent="Situación "+(e3.k+1)+" de 15";
+  $("e3Sit").textContent=it.sit; $("e3Preg").textContent=it.q;
+  $("e3Exp").className="explica"; $("e3Exp").textContent=""; $("e3Sig").style.display="none";
+  const box=$("e3Ops"); box.innerHTML="";
+  barajar(it.ops).forEach((o,k)=>{
+    const b=el("button","opcion"); b.appendChild(el("span","l","ABCD"[k]));
+    b.appendChild(document.createTextNode(o)); b.dataset.o=o; b.onclick=()=>responderSit(b,o); box.appendChild(b);
+  });
+}
+function responderSit(b,o){
+  const i=e3.orden[e3.k], it=T[i], ok=(o===it.t);
+  document.querySelectorAll("#e3Ops .opcion").forEach(x=>{ x.disabled=true; if(x.dataset.o===it.t) x.classList.add("correcta"); });
+  let p=0; if(ok) p=acertar(); else { b.classList.add("incorrecta"); E.refuerzo.add(i); fallar(); }
+  $("e3Exp").textContent=(ok?"¡Bien! +"+p+" ":"Era «"+it.t+"». ")+it.t+": "+it.d;
+  $("e3Exp").className="explica visible"; $("e3Sig").style.display="block";
+  $("e3Sig").textContent = e3.k===14 ? "Terminar estación" : "Siguiente";
+}
+$("e3Sig").onclick = ()=>{ e3.k++; if(e3.k<15) pintarSit(); else cerrarE3(false); };
+function cerrarE3(porTiempo){
+  if(E.done.e3) return;
+  const respondida = document.querySelector("#e3Ops .opcion:disabled")!==null;
+  for(let k=e3.k + (respondida?1:0); k<15; k++) E.refuerzo.add(e3.orden[k]);
+  finEstacion("e3", porTiempo?"Se acabó el tiempo":"¡Estación 3 lista!", "Aciertos: "+E.ac.e3+" de 15 · "+E.pts.e3+" puntos.", porTiempo);
+}
+
+/* ============ E4: detective de errores ============ */
+let e4={};
+$("mE4").onclick = ()=>{
+  if(E.done.e4) return;
+  iniciarEst("e4"); e4={orden:barajar([...Array(D.length).keys()]), k:0, resp:false};
+  pintarFrase(); iniciarReloj(4*60, $("e4Reloj"), ()=>cerrarE4(true)); mostrar("pE4");
+};
+function pintarFrase(){
+  const it=D[e4.orden[e4.k]]; e4.resp=false;
+  $("e4Num").textContent="Frase "+(e4.k+1)+" de "+D.length;
+  $("e4Exp").className="explica"; $("e4Exp").textContent=""; $("e4Sig").style.display="none";
+  const cont=$("e4Frase"); cont.innerHTML="";
+  const partes=it.txt.split(/(\{\d\})/);
+  partes.forEach(p=>{
+    const m=p.match(/^\{(\d)\}$/);
+    if(m){ const k=+m[1]; const s=el("span","pal",it.c[k].w); s.dataset.k=k; s.onclick=()=>elegirPal(s,k); cont.appendChild(s); }
+    else cont.appendChild(document.createTextNode(p));
+  });
+}
+function elegirPal(s,k){
+  if(e4.resp) return; e4.resp=true;
+  const it=D[e4.orden[e4.k]], malIdx=it.c.findIndex(x=>x.mal), ok=(k===malIdx);
+  document.querySelectorAll("#e4Frase .pal").forEach((x,j)=>{ x.style.cursor="default"; x.classList.add(j===malIdx?"culpable":"inocente"); });
+  if(!ok) s.classList.add("sospechoso");
+  let p=0; if(ok) p=acertar(); else { fallar(); E.refuerzo.add(idx(it.c[malIdx].ok)); }
+  $("e4Exp").textContent=(ok?"¡Detective! +"+p+" ":"Ese estaba bien. ")+"Donde dice «"+it.c[malIdx].w+"» debía decir «"+it.c[malIdx].ok+"». "+it.por;
+  $("e4Exp").className="explica visible"; $("e4Sig").style.display="block";
+  $("e4Sig").textContent = e4.k===D.length-1 ? "Terminar estación" : "Siguiente";
+}
+$("e4Sig").onclick = ()=>{ e4.k++; if(e4.k<D.length) pintarFrase(); else cerrarE4(false); };
+function cerrarE4(porTiempo){
+  if(E.done.e4) return;
+  for(let k=e4.k + (e4.resp?1:0); k<D.length; k++){ const it=D[e4.orden[k]]; E.refuerzo.add(idx(it.c.find(x=>x.mal).ok)); }
+  finEstacion("e4", porTiempo?"Se acabó el tiempo":"¡Estación 4 lista!", "Errores encontrados: "+E.ac.e4+" de "+D.length+" · "+E.pts.e4+" puntos.", porTiempo);
+}
+
+/* ============ E5: clasificador ============ */
+const catDe = nombre => CATS.findIndex(c=>c.ts.includes(nombre));
+let e5={};
+$("mE5").onclick = ()=>{
+  if(E.done.e5) return;
+  iniciarEst("e5"); e5={orden:barajar(idxSit), k:0, bloqueo:false};
+  pintarClasif(); iniciarReloj(3*60, $("e5Reloj"), ()=>cerrarE5(true)); mostrar("pE5");
+};
+function pintarClasif(){
+  const i=e5.orden[e5.k]; e5.bloqueo=false;
+  $("e5Num").textContent="Término "+(e5.k+1)+" de 15"; $("e5Term").textContent=T[i].t; $("e5Retro").textContent=""; $("e5Retro").className="retro";
+  const box=$("e5Ops"); box.innerHTML="";
+  CATS.forEach((c,k)=>{
+    const b=el("button","opcion"); b.appendChild(document.createTextNode(c.n)); b.appendChild(el("small","",c.d));
+    b.dataset.k=k; b.onclick=()=>responderClasif(b,k); box.appendChild(b);
+  });
+}
+function responderClasif(b,k){
+  if(e5.bloqueo) return; e5.bloqueo=true;
+  const i=e5.orden[e5.k], c=catDe(T[i].t), ok=(k===c), R=$("e5Retro");
+  document.querySelectorAll("#e5Ops .opcion").forEach(x=>{ x.disabled=true; if(+x.dataset.k===c) x.classList.add("correcta"); });
+  if(ok){ const p=acertar(); R.className="retro ok"; R.textContent="¡Correcto! +"+p; }
+  else { b.classList.add("incorrecta"); fallar(); E.refuerzo.add(i); R.className="retro mal"; R.textContent="«"+T[i].t+"» va en «"+CATS[c].n+"»."; }
+  const espera = ok?650:1900;
+  e5.timer=setTimeout(()=>{ if(E.done.e5) return; e5.k++; if(e5.k<15) pintarClasif(); else cerrarE5(false); }, espera);
+}
+function cerrarE5(porTiempo){
+  if(E.done.e5) return; clearTimeout(e5.timer);
+  for(let k=e5.k + (e5.bloqueo?1:0); k<15; k++) E.refuerzo.add(e5.orden[k]);
+  finEstacion("e5", porTiempo?"Se acabó el tiempo":"¡Estación 5 lista!", "Clasificados bien: "+E.ac.e5+" de 15 · "+E.pts.e5+" puntos.", porTiempo);
+}
+
+/* ============ E6: crucigrama ============ */
+let e6={};
+$("mE6").onclick = ()=>{
+  if(E.done.e6) return;
+  iniciarEst("e6");
+  e6={ palabras:CRUCI.words.map(w=>({...w, resuelta:false, pista:false, intentos:0})), rev:new Set(), sel:null };
+  construirCruci(); $("e6Retro").textContent=""; $("e6Retro").className="retro"; $("e6Resp").value="";
+  $("e6Pista").textContent="Toca una casilla numerada o una pista de la lista.";
+  iniciarReloj(5*60, $("e6Reloj"), ()=>cerrarE6(true)); mostrar("pE6");
+};
+function celdas(w){ const dr=w.d==="V"?1:0, dc=w.d==="H"?1:0; return [...w.w].map((ch,i)=>[w.r+dr*i, w.c+dc*i, ch]); }
+function construirCruci(){
+  const g=$("cruci"); g.innerHTML="";
+  const ancho=Math.min(window.innerWidth-28, 740); const cel=Math.max(22,Math.min(38,Math.floor((ancho-2*(CRUCI.W-1))/CRUCI.W)));
+  g.style.setProperty("--cel",cel+"px");
+  g.style.gridTemplateColumns="repeat("+CRUCI.W+","+cel+"px)";
+  const mapa={}, nums={};
+  e6.palabras.forEach((w,wi)=>{ celdas(w).forEach(([r,c,ch])=>{ (mapa[r+","+c]=mapa[r+","+c]||{ch,ws:[]}).ws.push(wi); }); nums[w.r+","+w.c]=w.n; });
+  e6.mapa=mapa;
+  for(let r=0;r<CRUCI.H;r++) for(let c=0;c<CRUCI.W;c++){
+    const k=r+","+c, d=el("div","cel"+(mapa[k]?" on":""));
+    if(mapa[k]){ d.dataset.k=k; if(nums[k]) d.appendChild(el("span","num",nums[k])); d.appendChild(el("span","ch","")); d.onclick=()=>tocarCelda(k); }
+    g.appendChild(d);
+  }
+  const L=$("e6Lista"); L.innerHTML="";
+  [["H","Horizontales"],["V","Verticales"]].forEach(([d,tit])=>{
+    L.appendChild(el("h3","",tit));
+    e6.palabras.forEach((w,wi)=>{ if(w.d!==d) return;
+      const p=el("div","p",w.n+". ("+w.w.length+" letras) "+T[idx(w.t)].d); p.id="pp"+wi; p.onclick=()=>seleccionar(wi); L.appendChild(p); });
+  });
+  pintarCruci();
+}
+function tocarCelda(k){
+  const ws=e6.mapa[k].ws; let wi=ws[0];
+  if(ws.length>1 && e6.sel!==null && ws.includes(e6.sel)) wi=ws.find(x=>x!==e6.sel);
+  seleccionar(wi);
+}
+function seleccionar(wi){
+  e6.sel=wi; const w=e6.palabras[wi];
+  $("e6Pista").textContent=w.n+(w.d==="H"?" horizontal":" vertical")+" ("+w.w.length+" letras): "+T[idx(w.t)].d;
+  $("e6Resp").value=""; $("e6Retro").textContent=""; $("e6Retro").className="retro"; pintarCruci();
+  $("e6Resp").focus({preventScroll:true});
+}
+function pintarCruci(){
+  document.querySelectorAll("#cruci .cel.on").forEach(d=>{
+    const k=d.dataset.k, m=e6.mapa[k];
+    d.querySelector(".ch").textContent = e6.rev.has(k)? m.ch : "";
+    d.classList.toggle("fija", e6.rev.has(k) && m.ws.some(wi=>e6.palabras[wi].resuelta));
+    d.classList.toggle("sel", e6.sel!==null && m.ws.includes(e6.sel));
+  });
+  e6.palabras.forEach((w,wi)=>{ const p=$("pp"+wi); if(p){ p.classList.toggle("ok",w.resuelta); p.classList.toggle("sel",e6.sel===wi); } });
+}
+$("e6Responder").onclick = ()=>{
+  if(E.done.e6) return;
+  if(e6.sel===null){ $("e6Retro").className="retro mal"; $("e6Retro").textContent="Primero elige una pista."; return; }
+  const w=e6.palabras[e6.sel]; if(w.resuelta) return;
+  const txt=$("e6Resp").value; if(!norm(txt)){ $("e6Resp").focus(); return; }
+  const R=$("e6Retro");
+  if(norm(txt).replace(/ /g,"")===norm(w.w).replace(/ /g,"")){
+    w.resuelta=true; celdas(w).forEach(([r,c])=>e6.rev.add(r+","+c));
+    if(w.pista){ const p=Math.round(BASE.e6/2); E.pts.e6+=p; pintarMarcador(); R.className="retro ok"; R.textContent="¡Correcto con pista! +"+p; E.refuerzo.add(idx(w.t)); }
+    else { const p=acertar(); R.className="retro ok"; R.textContent="¡Correcto! +"+p; if(w.intentos>0) E.refuerzo.add(idx(w.t)); }
+    $("e6Resp").value=""; pintarCruci();
+    if(e6.palabras.every(x=>x.resuelta)) setTimeout(()=>cerrarE6(false),900);
+  } else {
+    w.intentos++; fallar(); R.className="retro mal"; R.textContent="No es esa. Revisa la cantidad de letras ("+w.w.length+").";
+  }
+};
+$("e6Resp").addEventListener("keydown", ev=>{ if(ev.key==="Enter"){ ev.preventDefault(); $("e6Responder").click(); } });
+$("e6Pista1").onclick = ()=>{
+  if(E.done.e6 || e6.sel===null) return;
+  const w=e6.palabras[e6.sel]; if(w.resuelta) return;
+  const libres=celdas(w).filter(([r,c])=>!e6.rev.has(r+","+c));
+  if(!libres.length) return;
+  const [r,c]=libres[Math.floor(Math.random()*libres.length)]; e6.rev.add(r+","+c); w.pista=true; pintarCruci();
+  $("e6Retro").className="retro"; $("e6Retro").textContent="Pista usada: esta palabra vale la mitad.";
+};
+$("e6Terminar").onclick = ()=>cerrarE6(false);
+function cerrarE6(porTiempo){
+  if(E.done.e6) return;
+  e6.palabras.forEach(w=>{ if(!w.resuelta) E.refuerzo.add(idx(w.t)); });
+  finEstacion("e6", porTiempo?"Se acabó el tiempo":"¡Crucigrama terminado!", "Palabras resueltas sin pista: "+E.ac.e6+" de "+CRUCI.words.length+" · "+E.pts.e6+" puntos.", porTiempo);
+}
+
+/* ============ Resultados ============ */
+$("btnVerResultados").onclick = verResultados;
+$("btnVolverMenu").onclick = irMenu;
+const ESTS=["e1","e2","e3","e4","e5","e6"];
+function rangoDe(dom){
+  if(dom>=90) return ["Leyenda de Laplace","Dominas el vocabulario. Mantén el ritmo hasta la prueba."];
+  if(dom>=75) return ["Estratega del azar","Vas muy bien. Repasa los términos de la lista y estarás listo."];
+  if(dom>=55) return ["Explorador del azar","Buen avance. Estudia los términos marcados y vuelve a intentarlo."];
+  return ["Aprendiz del azar","Todavía hay mucho por ganar: repasa las definiciones y juega de nuevo."];
+}
+function logros(){
+  const todas=ESTS.every(e=>E.done[e]);
+  return [
+    ["Racha ardiente","8 aciertos seguidos en una estación", E.mejorCombo>=8],
+    ["Parejas sin tropiezos","Una ronda de parejas sin errores", !!E.rondaLimpia],
+    ["Rosco perfecto","15 de 15 en el rosco", E.ac.e2===15],
+    ["Ojo de detective","13 o más errores encontrados", (E.ac.e4||0)>=13],
+    ["Clasificador exacto","15 de 15 en el clasificador", E.ac.e5===15],
+    ["Cruciverbista","Crucigrama completo sin pistas", E.ac.e6===CRUCI.words.length],
+    ["Contra el reloj","Las 6 estaciones sin que se acabe el tiempo", todas && ESTS.every(e=>!E.tiempo[e])]
+  ];
+}
+function resumenDatos(){
+  const hechas=ESTS.filter(e=>E.done[e]);
+  const totItems=hechas.reduce((a,e)=>a+NITEMS[e],0), ac=hechas.reduce((a,e)=>a+(E.ac[e]||0),0);
+  const maxT=hechas.reduce((a,e)=>a+maxPts(e),0);
+  return {hechas, totItems, ac, maxT, dom: totItems? Math.round(100*ac/totItems):0};
+}
+function verResultados(){
+  detenerReloj(); clearTimeout(e5.timer);
+  const R=resumenDatos(), faltan=ESTS.filter(e=>!E.done[e]);
+  $("finAlumno").textContent=E.nombre+" · "+E.curso;
+  $("rTotal").textContent="Puntaje: "+totalPts()+" de "+R.maxT+(faltan.length?" · faltan "+faltan.length+" estación(es)":"");
+  const [nom,msg]=rangoDe(R.dom);
+  const rg=$("rRango"); rg.innerHTML=""; rg.appendChild(el("b","",R.hechas.length?nom:"Sin estaciones jugadas"));
+  rg.appendChild(document.createTextNode(R.hechas.length? "Dominio: "+R.ac+" de "+R.totItems+" ("+R.dom+" %). "+msg : "Juega al menos una estación."));
+  const cj=$("rCajas"); cj.innerHTML="";
+  ESTS.forEach(e=>{ const c=el("div","caja");
+    c.appendChild(el("div","n",E.done[e]?String(E.pts[e]):"–")); c.appendChild(el("div","t",NOMBRES[e]));
+    c.appendChild(el("div","m",E.done[e]?E.ac[e]+" de "+NITEMS[e]+" · máx. "+maxPts(e):"pendiente")); cj.appendChild(c); });
+  const lg=$("rLogros"); lg.innerHTML="";
+  logros().forEach(([n,d,g])=>{ const c=el("div","logro"+(g?" ganado":"")); c.appendChild(el("b","",(g?"✔ ":"")+n)); c.appendChild(document.createTextNode(d)); lg.appendChild(c); });
+  const lista=$("listaRefuerzo"); lista.innerHTML="";
+  const ids=[...E.refuerzo].sort((a,b)=>a-b);
+  if(ids.length===0){
+    $("tituloRefuerzo").textContent=faltan.length?"Aún no hay términos para reforzar":"Sin términos por reforzar";
+    $("subRefuerzo").textContent=faltan.length?"Completa las estaciones que faltan.":"Dominas los 30 términos. ¡Excelente!";
+  } else {
+    $("tituloRefuerzo").textContent="Términos que debes reforzar ("+ids.length+")";
+    $("subRefuerzo").textContent="Estúdialos antes de la prueba de vocabulario.";
+    ids.forEach(i=>{ const c=el("div","refuerzo"); c.appendChild(el("div","t",T[i].t));
+      c.appendChild(el("div","d",T[i].d)); c.appendChild(el("div","s","Sinónimos: "+T[i].s.join(", "))); lista.appendChild(c); });
+  }
+  mostrar("pFin");
+}
+$("btnCopiar").onclick = ()=>{
+  const R=resumenDatos(), ids=[...E.refuerzo].sort((a,b)=>a-b);
+  const txt="Torneo de Vocabulario de Probabilidad · "+E.nombre+" · "+E.curso+"\n"+
+    "Puntaje: "+totalPts()+" de "+R.maxT+" · Dominio: "+R.dom+" % · Rango: "+rangoDe(R.dom)[0]+"\n"+
+    ESTS.map(e=>NOMBRES[e]+": "+(E.done[e]?E.pts[e]+" pts ("+E.ac[e]+"/"+NITEMS[e]+")":"–")).join(" · ")+"\n"+
+    "Reforzar: "+(ids.length?ids.map(i=>T[i].t).join(", "):"ninguno");
+  const ok=()=>{ $("btnCopiar").textContent="¡Copiado!"; setTimeout(()=>$("btnCopiar").textContent="Copiar resumen",1500); };
+  if(navigator.clipboard) navigator.clipboard.writeText(txt).then(ok).catch(()=>{});
+};
+
+/* Hook de solo lectura para pruebas automatizadas */
+window.__TORNEO_TEST = {
+  T, D, CATS, CRUCI, E, S,
+  e1Pares:()=>e1.rondas? e1.rondas[e1.r]:null,
+  roscoActual:()=>e2.cola&&e2.cola.length? T[actualRosco()].t : null,
+  sitActual:()=>e3.orden? T[e3.orden[e3.k]].t : null,
+  detMal:()=>e4.orden? D[e4.orden[e4.k]].c.findIndex(x=>x.mal) : null,
+  claseOk:()=>e5.orden? catDe(T[e5.orden[e5.k]].t) : null,
+  cruciPalabras:()=>e6.palabras? e6.palabras.map(w=>w.w):null
+};
+</script>
+</body>
+</html>
